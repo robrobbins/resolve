@@ -1,0 +1,10 @@
+{
+  "name": "Resolve",
+  "description": "Backbone with only cash.js as a dependency",
+  "devDependencies": {
+    "gulp": "~3.8.8",
+    "gulp-concat": "~2.4.1",
+    "gulp-jasmine": "~1.0.1",
+    "cash-js": "~0.3.2"
+  }
+}
