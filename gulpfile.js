@@ -6,6 +6,7 @@ gulp.task('build', function() {
   var modules = [
     './src/initialize.js',
     './src/events.js',
+    './src/model.js',
     './src/return.js'
   ];
   
@@ -16,5 +17,10 @@ gulp.task('build', function() {
 
 gulp.task('events-spec', function() {
   return gulp.src('./spec/events.js')
+    .pipe(jasmine({includeStackTrace: true}));
+});
+
+gulp.task('model-spec', function() {
+  return gulp.src('./spec/model.js')
     .pipe(jasmine({includeStackTrace: true}));
 });
