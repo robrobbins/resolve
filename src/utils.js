@@ -1,15 +1,6 @@
-// Functionality not in Cash.js, but still needed for Resolve
+// Functionality not in any static files, but still needed for Resolve
 var utils = Backbone.utils = {
-  defaults: function(targ) {
-    // not checking the arg, DBS
-    for (var i = 1, length = arguments.length; i < length; i++) {
-      var source = arguments[i];
-      for (var prop in source) {
-        if (targ[prop] === undefined) targ[prop] = source[prop];
-      }
-    }
-    return targ;
-  },
+  _uid: 0,
   
   eq: function(a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.
@@ -91,7 +82,7 @@ var utils = Backbone.utils = {
         while (size--) {
           // Deep compare each member
           key = keys[size];
-          if (!(result = this.has(b, key) && this.eq(a[key], b[key], aStack, bStack))) break;
+          if (!(result = Object.has(b, key) && this.eq(a[key], b[key], aStack, bStack))) break;
         }
       }
     }
@@ -103,14 +94,12 @@ var utils = Backbone.utils = {
   
   // Escapes a string for HTML interpolation, casts a truthy non-string to a string and returns empty string for falsy
   escape: function(str) {
-    return str ? typeof str === 'string' ? str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(
-      /"/g, '&quot;').replace(/'/g, '&#x27;').replace(/`/g, '&#x60;') : String(str) : '';
+    return str ? typeof str === 'string' ? String.escape(str) : String(str) : '';
   },
   
-  // Shortcut function for checking if an object has a given property directly
-  // on itself (in other words, not on a prototype).
-  has: function(obj, key) {
-    return obj != null && Object.prototype.hasOwnProperty.call(obj, key);
+  getUid: function(pre) {
+    var n = ++this._uid;
+    return pre ? pre + n : String(n);
   },
   
   // Perform a deep comparison to check if two objects are equal.

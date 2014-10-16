@@ -1,13 +1,13 @@
 /*global spyOn*/
+require('../dist/static');
 
-var $ = require('cash-js');
 var Backbone = require('../dist/resolve');
 
 describe('The Events Module', function() {
   
   it('uses on and trigger', function() {
     var obj = { counter: 0 };
-    $.extend(obj,Backbone.Events);
+    Object.extend(obj, Backbone.Events);
     obj.on('event', function() { obj.counter += 1; });
     obj.trigger('event');
     
@@ -22,7 +22,7 @@ describe('The Events Module', function() {
   
   it('binds and triggers multiple events', function() {
     var obj = { counter: 0 };
-    $.extend(obj, Backbone.Events);
+    Object.extend(obj, Backbone.Events);
 
     obj.on('a b c', function() { obj.counter += 1; });
 
@@ -42,7 +42,7 @@ describe('The Events Module', function() {
   
   it('binds and triggers with event maps', function() {
     var obj = { counter: 0 };
-    $.extend(obj, Backbone.Events);
+    Object.extend(obj, Backbone.Events);
 
     var increment = function() {
       this.counter += 1;
@@ -73,8 +73,8 @@ describe('The Events Module', function() {
   });
   
   it('can listenTo and stopListening', function() {
-    var a = $.extend({}, Backbone.Events);
-    var b = $.extend({}, Backbone.Events);
+    var a = Object.extend({}, Backbone.Events);
+    var b = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     var spy = spyOn(this, 'cb');
     
@@ -88,8 +88,8 @@ describe('The Events Module', function() {
   });
   
   it('can listenTo and stopListening with event maps', function() {
-    var a = $.extend({}, Backbone.Events);
-    var b = $.extend({}, Backbone.Events);
+    var a = Object.extend({}, Backbone.Events);
+    var b = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     var spy = spyOn(this, 'cb');
     
@@ -106,8 +106,8 @@ describe('The Events Module', function() {
   });
   
   it('will stopListening with omitted args', function() {
-    var a = $.extend({}, Backbone.Events);
-    var b = $.extend({}, Backbone.Events);
+    var a = Object.extend({}, Backbone.Events);
+    var b = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     var spy = spyOn(this, 'cb');
     
@@ -126,8 +126,8 @@ describe('The Events Module', function() {
   });
   
   it("will listenTo and stopListening with event maps", function() {
-    var a = $.extend({}, Backbone.Events);
-    var b = $.extend({}, Backbone.Events);
+    var a = Object.extend({}, Backbone.Events);
+    var b = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     var spy = spyOn(this, 'cb');
     
@@ -141,7 +141,7 @@ describe('The Events Module', function() {
   });
   
   it("will listenTo itself", function(){
-    var e = $.extend({}, Backbone.Events);
+    var e = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     var spy = spyOn(this, 'cb');
     
@@ -152,7 +152,7 @@ describe('The Events Module', function() {
   });
   
   it("will listenTo itself and clean itself up with stopListening", function(){
-    var e = $.extend({}, Backbone.Events);
+    var e = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     var spy = spyOn(this, 'cb');
     
@@ -165,8 +165,8 @@ describe('The Events Module', function() {
   });
   
   it("cleans up references with stopListening", function() {
-    var a = $.extend({}, Backbone.Events);
-    var b = $.extend({}, Backbone.Events);
+    var a = Object.extend({}, Backbone.Events);
+    var b = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     
     a.listenTo(b, 'all', this.cb).stopListening();
@@ -180,8 +180,8 @@ describe('The Events Module', function() {
   });
   
   it("cleans up references via listenTo and stopListening", function() {
-    var a = $.extend({}, Backbone.Events);
-    var b = $.extend({}, Backbone.Events);
+    var a = Object.extend({}, Backbone.Events);
+    var b = Object.extend({}, Backbone.Events);
     this.cb = function() {};
         
     a.listenTo(b, 'all', this.cb);
@@ -193,7 +193,7 @@ describe('The Events Module', function() {
   });
   
   it("doesn't throw an error with listenTo with empty callback", function(){
-    var e = $.extend({}, Backbone.Events);
+    var e = Object.extend({}, Backbone.Events);
     e.listenTo(e, "foo", null);
     
     expect(function() {e.trigger("foo");}).not.toThrow();
@@ -201,7 +201,7 @@ describe('The Events Module', function() {
   
   it("will trigger all for each event", function() {
     var a, b, obj = { counter: 0 };
-    $.extend(obj, Backbone.Events);
+    Object.extend(obj, Backbone.Events);
     obj.on('all', function(event) {
       obj.counter++;
       if (event === 'a') a = true;
@@ -216,7 +216,7 @@ describe('The Events Module', function() {
   
   it("uses on, then unbinds all functions", function() {
     var obj = { counter: 0 };
-    $.extend(obj,Backbone.Events);
+    Object.extend(obj,Backbone.Events);
     var callback = function() { obj.counter += 1; };
     obj.on('event', callback);
     obj.trigger('event');
@@ -228,7 +228,7 @@ describe('The Events Module', function() {
   
   it("binds two callbacks, unbinds only one", function() {
     var obj = { counterA: 0, counterB: 0 };
-    $.extend(obj,Backbone.Events);
+    Object.extend(obj,Backbone.Events);
     var callback = function() { obj.counterA += 1; };
     obj.on('event', callback);
     obj.on('event', function() { obj.counterB += 1; });
@@ -241,7 +241,7 @@ describe('The Events Module', function() {
   
   it("unbinds a callback in the midst of it firing", function() {
     var obj = {counter: 0};
-    $.extend(obj, Backbone.Events);
+    Object.extend(obj, Backbone.Events);
     var callback = function() {
       obj.counter += 1;
       obj.off('event', callback);
@@ -262,7 +262,7 @@ describe('The Events Module', function() {
     var testClass = new TestClass();
     var spy = spyOn(testClass, 'assertTrue');
 
-    var obj = $.extend({},Backbone.Events);
+    var obj = Object.extend({},Backbone.Events);
     obj.on('event', function () { this.assertTrue(); }, (testClass));
     obj.trigger('event');
     
@@ -271,7 +271,7 @@ describe('The Events Module', function() {
   
   it("uses a nested trigger with unbind", function () {
     var obj = { counter: 0 };
-    $.extend(obj, Backbone.Events);
+    Object.extend(obj, Backbone.Events);
     var incr1 = function(){ obj.counter += 1; obj.off('event', incr1); obj.trigger('event'); };
     var incr2 = function(){ obj.counter += 1; };
     obj.on('event', incr1);
@@ -282,7 +282,7 @@ describe('The Events Module', function() {
   });
   
   it("does not alter the callback list during trigger", function () {
-    var counter = 0, obj = $.extend({}, Backbone.Events);
+    var counter = 0, obj = Object.extend({}, Backbone.Events);
     var incr = function(){ counter++; };
     obj.on('event', function(){ obj.on('event', incr).on('all', incr); })
     .trigger('event');
@@ -300,7 +300,7 @@ describe('The Events Module', function() {
   
   it("#1282 - 'all' callback list is retrieved after each event.", function() {
     var counter = 0;
-    var obj = $.extend({}, Backbone.Events);
+    var obj = Object.extend({}, Backbone.Events);
     var incr = function(){ counter++; };
     obj.on('x', function() {
       obj.on('y', incr).on('all', incr);
@@ -311,19 +311,19 @@ describe('The Events Module', function() {
   });
   
   it("shows if no callback is provided, `on` is a noop", function() {
-    $.extend({}, Backbone.Events).on('test').trigger('test');
+    Object.extend({}, Backbone.Events).on('test').trigger('test');
     
     expect(true).toBe(true);
   });
   
   it("shows if callback is truthy but not a function, `on` should throw an error", function() {
-    var view = $.extend({}, Backbone.Events).on('test', 'noop');
+    var view = Object.extend({}, Backbone.Events).on('test', 'noop');
     
     expect(function() {view.trigger('test');}).toThrow();
   });
   
   it("removes all events for a specific context", function() {
-    var obj = $.extend({}, Backbone.Events);
+    var obj = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     this.cb2 = function() {};
     var spy = spyOn(this, 'cb');
@@ -339,7 +339,7 @@ describe('The Events Module', function() {
   });
   
   it("removes all events for a specific callback", function() {
-    var obj = $.extend({}, Backbone.Events);
+    var obj = Object.extend({}, Backbone.Events);
     this.success = function() {};
     this.fail = function() {};
     var spy = spyOn(this, 'success');
@@ -356,7 +356,7 @@ describe('The Events Module', function() {
   });
   
   it("#1310 - off does not skip consecutive events", function() {
-    var obj = $.extend({}, Backbone.Events);
+    var obj = Object.extend({}, Backbone.Events);
     this.cb = function() {};
     var spy = spyOn(this, 'cb');
     

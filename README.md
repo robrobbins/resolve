@@ -1,4 +1,4 @@
 resolve
 =======
 
-Backbone.js with some Cash, without the jQuery and _.
+Backbone. Straight.

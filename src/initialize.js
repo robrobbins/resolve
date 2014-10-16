@@ -1,15 +1,14 @@
 (function(root, factory) {
   // Node.js or CommonJS
   if (typeof exports !== 'undefined') {
-    var $ = require('cash-js');
-    factory(root, exports, $);
+    factory(root, exports);
 
   // browser
   } else {
-    root.Backbone = factory(root, {}, root.$);
+    root.Backbone = factory(root, {});
   }
 
-} (this, function(root, Backbone, $) {
+} (this, function(root, Backbone) {
   
 // Create local references to array methods we'll want to use later.
 var array = [];

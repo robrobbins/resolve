@@ -7,7 +7,7 @@
 // succession.
 //
 //     var object = {};
-//     $.extend(object, Backbone.Events);
+//     Object.extend(object, Backbone.Events);
 //     object.on('expand', function(){ alert('expanded'); });
 //     object.trigger('expand');
 //
@@ -24,7 +24,7 @@ var Events = Backbone.Events = {
   
   listenTo: function(obj, name, callback) {
     var listeningTo = this._listeningTo || (this._listeningTo = {});
-    var id = obj._listenId || (obj._listenId = $.getUid('l'));
+    var id = obj._listenId || (obj._listenId = utils.getUid('l'));
     listeningTo[id] = obj;
     if (!callback && typeof name === 'object') callback = this;
     obj.on(name, callback, this);

@@ -11,19 +11,18 @@
 var Model = Backbone.Model = function(attributes, options) {
   var attrs = attributes || {};
   options || (options = {});
-  this.cid = $.getUid('c');
+  this.cid = utils.getUid('c');
   this.attributes = {};
   if (options.collection) this.collection = options.collection;
   if (options.parse) attrs = this.parse(attrs, options) || {};
-  // ** removed _.result TODO is this.defaults ever a function? **
-  attrs = utils.defaults({}, attrs, this.defaults);
+  attrs = Object.defaults({}, attrs, this.defaults);
   this.set(attrs, options);
   this.changed = {};
   this.initialize.apply(this, arguments);
 };
 
 // Attach all inheritable methods to the Model prototype.
-$.extend(Model.prototype, Events, {
+Object.extend(Model.prototype, Events, {
 
   // A hash of attributes whose current and previous value differ.
   changed: null,
@@ -37,11 +36,11 @@ $.extend(Model.prototype, Events, {
 
   // Initialize is an empty function by default. Override it with your own
   // initialization logic.
-  initialize: $.noop,
+  initialize: function() {},
 
   // Return a copy of the model's `attributes` object.
   toJSON: function() {
-    return $.extend({}, this.attributes);
+    return Object.extend({}, this.attributes);
   },
 
   // Proxy `Backbone.sync` by default -- but override this if you need
@@ -94,7 +93,7 @@ $.extend(Model.prototype, Events, {
     this._changing  = true;
 
     if (!changing) {
-      this._previousAttributes = $.extend({}, this.attributes);
+      this._previousAttributes = Object.extend({}, this.attributes);
       this.changed = {};
     }
     current = this.attributes, prev = this._previousAttributes;
@@ -140,14 +139,14 @@ $.extend(Model.prototype, Events, {
   // Remove an attribute from the model, firing `"change"`. `unset` is a noop
   // if the attribute doesn't exist.
   unset: function(attr, options) {
-    return this.set(attr, undefined, $.extend({}, options, {unset: true}));
+    return this.set(attr, undefined, Object.extend({}, options, {unset: true}));
   },
 
   // Clear all attributes on the model, firing `"change"`.
   clear: function(options) {
     var attrs = {};
     for (var key in this.attributes) attrs[key] = void 0;
-    return this.set(attrs, $.extend({}, options, {unset: true}));
+    return this.set(attrs, Object.extend({}, options, {unset: true}));
   },
 
   // Determine if the model has changed since the last `"change"` event.
@@ -164,7 +163,7 @@ $.extend(Model.prototype, Events, {
   // You can also pass an attributes object to diff against the model,
   // determining if there *would be* a change.
   changedAttributes: function(diff) {
-    if (!diff) return this.hasChanged() ? $.extend({}, this.changed) : false;
+    if (!diff) return this.hasChanged() ? Object.extend({}, this.changed) : false;
     var val, changed = false;
     var old = this._changing ? this._previousAttributes : this.attributes;
     for (var attr in diff) {
@@ -184,14 +183,14 @@ $.extend(Model.prototype, Events, {
   // Get all of the attributes of the model at the time of the previous
   // `"change"` event.
   previousAttributes: function() {
-    return $.extend({}, this._previousAttributes);
+    return Object.extend({}, this._previousAttributes);
   },
 
   // Fetch the model from the server. If the server's representation of the
   // model differs from its current attributes, they will be overridden,
   // triggering a `"change"` event.
   fetch: function(options) {
-    options = options ? $.extend({}, options) : {};
+    options = options ? Object.extend({}, options) : {};
     if (options.parse === undefined) options.parse = true;
     var model = this;
     var success = options.success;
@@ -218,7 +217,7 @@ $.extend(Model.prototype, Events, {
       (attrs = {})[key] = val;
     }
 
-    options = $.extend({validate: true}, options);
+    options = Object.extend({validate: true}, options);
 
     // If we're not waiting and attributes exist, save acts as
     // `set(attr).save(null, opts)` with validation. Otherwise, check if
@@ -231,7 +230,7 @@ $.extend(Model.prototype, Events, {
 
     // Set temporary attributes if `{wait: true}`.
     if (attrs && options.wait) {
-      this.attributes = $.extend({}, attributes, attrs);
+      this.attributes = Object.extend({}, attributes, attrs);
     }
 
     // After a successful server-side save, the client is (optionally)
@@ -243,8 +242,8 @@ $.extend(Model.prototype, Events, {
       // Ensure attributes are restored during synchronous saves.
       model.attributes = attributes;
       var serverAttrs = model.parse(resp, options);
-      if (options.wait) serverAttrs = $.extend(attrs || {}, serverAttrs);
-      if ($.isObject(serverAttrs) && !model.set(serverAttrs, options)) {
+      if (options.wait) serverAttrs = Object.extend(attrs || {}, serverAttrs);
+      if (Object.isObject(serverAttrs) && !model.set(serverAttrs, options)) {
         return false;
       }
       if (success) success(model, resp, options);
@@ -266,7 +265,7 @@ $.extend(Model.prototype, Events, {
   // Optimistically removes the model from its collection, if it has one.
   // If `wait: true` is passed, waits for the server to respond before removal.
   destroy: function(options) {
-    options = options ? $.extend({}, options) : {};
+    options = options ? Object.extend({}, options) : {};
     var model = this;
     var success = options.success;
 
@@ -321,17 +320,17 @@ $.extend(Model.prototype, Events, {
 
   // Check if the model is currently in a valid state.
   isValid: function(options) {
-    return this._validate({}, $.extend(options || {}, { validate: true }));
+    return this._validate({}, Object.extend(options || {}, { validate: true }));
   },
 
   // Run validation against the next complete set of model attributes,
   // returning `true` if all is well. Otherwise, fire an `"invalid"` event.
   _validate: function(attrs, options) {
     if (!options.validate || !this.validate) return true;
-    attrs = $.extend({}, this.attributes, attrs);
+    attrs = Object.extend({}, this.attributes, attrs);
     var error = this.validationError = this.validate(attrs, options) || null;
     if (!error) return true;
-    this.trigger('invalid', this, error, $.extend(options, {validationError: error}));
+    this.trigger('invalid', this, error, Object.extend(options, {validationError: error}));
     return false;
   }
 });

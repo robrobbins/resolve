@@ -1,6 +1,6 @@
 /*global spyOn*/
+require('../dist/static');
 
-var $ = require('cash-js');
 var Backbone = require('../dist/resolve');
 
 beforeEach(function() {
@@ -292,12 +292,23 @@ describe('The Model Module', function() {
     expect(i).toBe(2);
   });
   
-  it("unset and changedAttributes", function() {
+  it("unsets and reflects in changedAttributes", function() {
     var model = new Backbone.Model({a: 1});
     model.on('change', function() {
       expect('a' in model.changedAttributes()).toBeTruthy();
     });
     model.unset('a');
+  });
+  
+  it("uses a non-default id attribute.", function() {
+    var MongoModel = Backbone.Model.extend({idAttribute : '_id'});
+    var model = new MongoModel({id: 'eye-dee', _id: 25, title: 'Model'});
+    expect(model.get('id')).toBe('eye-dee');
+    expect(model.id).toBe(25);
+    expect(model.isNew()).toBeFalsy();
+    model.unset('_id');
+    expect(model.id).toBeFalsy();
+    expect(model.isNew()).toBe(true);
   });
   
 });
