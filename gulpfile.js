@@ -5,6 +5,7 @@ var gulp = require('gulp'),
 gulp.task('build', function() {
   var modules = [
     './src/initialize.js',
+    './src/utils.js',
     './src/events.js',
     './src/model.js',
     './src/return.js'

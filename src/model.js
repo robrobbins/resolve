@@ -297,6 +297,8 @@ $.extend(Model.prototype, Events, {
   // that will be called.
   url: function() {
     var base = this.urlRoot || this.collection && this.collection.url || urlError();
+    // may be a function
+    if(typeof base === 'function') base = base.call(this);
     if (this.isNew()) return base;
     return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
   },

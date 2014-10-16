@@ -1,3 +1,4 @@
+// Functionality not in Cash.js, but still needed for Resolve
 var utils = Backbone.utils = {
   defaults: function(targ) {
     // not checking the arg, DBS
@@ -100,9 +101,10 @@ var utils = Backbone.utils = {
     return result;
   },
   
-  // Escapes a string for HTML interpolation
+  // Escapes a string for HTML interpolation, casts a truthy non-string to a string and returns empty string for falsy
   escape: function(str) {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/`/g, '&#x60;');
+    return str ? typeof str === 'string' ? str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(
+      /"/g, '&quot;').replace(/'/g, '&#x27;').replace(/`/g, '&#x60;') : String(str) : '';
   },
   
   // Shortcut function for checking if an object has a given property directly
