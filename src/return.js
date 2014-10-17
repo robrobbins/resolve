@@ -1,3 +1,4 @@
+
 // Helpers
 // -------
 
@@ -11,14 +12,14 @@ var extend = function(protoProps, staticProps) {
   // The constructor function for the new subclass is either defined by you
   // (the "constructor" property in your `extend` definition), or defaulted
   // by us to simply call the parent's constructor.
-  if (protoProps && Object.has(protoProps, 'constructor')) {
+  if (protoProps && _.has(protoProps, 'constructor')) {
     child = protoProps.constructor;
   } else {
     child = function(){ return parent.apply(this, arguments); };
   }
 
   // Add static properties to the constructor function, if supplied.
-  Object.extend(child, parent, staticProps);
+  _.extend(child, parent, staticProps);
 
   // Set the prototype chain to inherit from `parent`, without calling
   // `parent`'s constructor function.
@@ -28,7 +29,7 @@ var extend = function(protoProps, staticProps) {
 
   // Add prototype properties (instance properties) to the subclass,
   // if supplied.
-  if (protoProps) Object.extend(child.prototype, protoProps);
+  if (protoProps) _.extend(child.prototype, protoProps);
 
   // Set a convenience property in case the parent's prototype is needed
   // later.
@@ -38,8 +39,7 @@ var extend = function(protoProps, staticProps) {
 };
 
 // Set up inheritance for the model, collection, router, view and history.
-// Model.extend = Collection.extend = Router.extend = View.extend = History.extend = extend;
-Model.extend = extend;
+Model.extend = Collection.extend = Router.extend = View.extend = History.extend = extend;
 
 // Throw an error when a URL is needed, and none is supplied.
 var urlError = function() {

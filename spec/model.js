@@ -1,6 +1,4 @@
 /*global spyOn*/
-require('../dist/static');
-
 var Backbone = require('../dist/resolve');
 
 beforeEach(function() {

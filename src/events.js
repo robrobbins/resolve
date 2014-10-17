@@ -7,11 +7,12 @@
 // succession.
 //
 //     var object = {};
-//     Object.extend(object, Backbone.Events);
+//     _.extend(object, Backbone.Events);
 //     object.on('expand', function(){ alert('expanded'); });
 //     object.trigger('expand');
 //
 var Events = Backbone.Events = {
+
   // Bind an event to a `callback` function. Passing `"all"` will bind
   // the callback to all events fired.
   on: function(name, callback, context) {
@@ -21,14 +22,18 @@ var Events = Backbone.Events = {
     events.push({callback: callback, context: context, ctx: context || this});
     return this;
   },
-  
-  listenTo: function(obj, name, callback) {
-    var listeningTo = this._listeningTo || (this._listeningTo = {});
-    var id = obj._listenId || (obj._listenId = utils.getUid('l'));
-    listeningTo[id] = obj;
-    if (!callback && typeof name === 'object') callback = this;
-    obj.on(name, callback, this);
-    return this;
+
+  // Bind an event to only be triggered a single time. After the first time
+  // the callback is invoked, it will be removed.
+  once: function(name, callback, context) {
+    if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
+    var self = this;
+    var once = _.once(function() {
+      self.off(name, once);
+      callback.apply(this, arguments);
+    });
+    once._callback = callback;
+    return this.on(name, once, context);
   },
 
   // Remove one or many callbacks. If `context` is null, removes all
@@ -44,7 +49,7 @@ var Events = Backbone.Events = {
       return this;
     }
 
-    var names = name ? [name] : Object.keys(this._events);
+    var names = name ? [name] : _.keys(this._events);
     for (var i = 0, length = names.length; i < length; i++) {
       name = names[i];
 
@@ -108,14 +113,19 @@ var Events = Backbone.Events = {
     for (var id in listeningTo) {
       obj = listeningTo[id];
       obj.off(name, callback, this);
-      if (remove || Object.keys(obj._events).length === 0) delete this._listeningTo[id];
+      if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
     }
     return this;
   }
+
 };
 
+// Regular expression used to split event strings.
 var eventSplitter = /\s+/;
 
+// Implement fancy features of the Events API such as multiple event
+// names `"change blur"` and jQuery-style event maps `{change: action}`
+// in terms of the existing API.
 var eventsApi = function(obj, action, name, rest) {
   if (!name) return true;
 
@@ -152,3 +162,23 @@ var triggerEvents = function(events, args) {
     default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args); return;
   }
 };
+
+var listenMethods = {listenTo: 'on', listenToOnce: 'once'};
+
+// Inversion-of-control versions of `on` and `once`. Tell *this* object to
+// listen to an event in another object ... keeping track of what it's
+// listening to.
+_.each(listenMethods, function(implementation, method) {
+  Events[method] = function(obj, name, callback) {
+    var listeningTo = this._listeningTo || (this._listeningTo = {});
+    var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
+    listeningTo[id] = obj;
+    if (!callback && typeof name === 'object') callback = this;
+    obj[implementation](name, callback, this);
+    return this;
+  };
+});
+
+// Allow the `Backbone` object to serve as a global event bus, for folks who
+// want global "pubsub" in a convenient place.
+_.extend(Backbone, Events);

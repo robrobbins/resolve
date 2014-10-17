@@ -1,15 +1,18 @@
 (function(root, factory) {
   // Node.js or CommonJS
   if (typeof exports !== 'undefined') {
-    factory(root, exports);
+    var _ = require('underscore');
+    factory(root, exports, _);
 
   // browser
   } else {
-    root.Backbone = factory(root, {});
+    root.Backbone = factory(root, {}, root._);
   }
 
-} (this, function(root, Backbone) {
-  
+} (this, function(root, Backbone, _) {
+// Initial Setup
+// -------------
+
 // Create local references to array methods we'll want to use later.
 var array = [];
 var slice = array.slice;

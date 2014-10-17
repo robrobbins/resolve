@@ -16,18 +16,6 @@ gulp.task('build', function() {
     .pipe(gulp.dest('./dist/'));
 });
 
-gulp.task('build-static', function() {
-  var modules = [
-    './lib/static/object.js',
-    './lib/static/string.js',
-    './lib/static/function.js'
-  ];
-  
-  gulp.src(modules)
-    .pipe(concat('static.js'))
-    .pipe(gulp.dest('./dist/'));
-});
-
 gulp.task('events-spec', function() {
   return gulp.src('./spec/events.js')
     .pipe(jasmine({includeStackTrace: true}));
