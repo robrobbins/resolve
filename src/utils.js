@@ -105,5 +105,14 @@ var utils = Backbone.utils = {
   // Perform a deep comparison to check if two objects are equal.
   isEqual: function(a, b) {
     return this.eq(a, b, [], []);
+  },
+  
+  // If the value of the named `property` is a function then invoke it with the
+  // `object` as context; otherwise, return it.
+  result: function(obj, prop, fb) {
+    var val = obj == null ? undefined : obj[prop];
+    if (val === undefined) return fb;
+    return Function.isFunction(val) ? obj[prop]() : val;
   }
+  
 };

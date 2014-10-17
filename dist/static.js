@@ -7,8 +7,9 @@ Object.defaults = function(targ) {
   var len = arguments.length, i, j, len2, src, keys, curr;
   for (i = 1; i < len; i++) {
     src = arguments[i];
-    keys = Object.keys(src || {});
-    for (j = 0, len2 = keys.length; j < len2; j++) {
+    if(!src) continue;
+    keys = Object.keys(src), len2 = keys.length;
+    for (j = 0; j < len2; j++) {
       curr = keys[j];
       if (targ[curr] === undefined) targ[curr] = src[curr];
     }
@@ -24,8 +25,9 @@ Object.extend = function(targ) {
   var len = arguments.length, i, j, len2, src, keys, curr;
   for (i = 1; i < len; i++) {
     src = arguments[i];
-    keys = Object.keys(src || {});
-    for (j = 0, len2 = keys.length; j < len2; j++) {
+    if(!src) continue;
+    keys = Object.keys(src), len2 = keys.length;
+    for (j = 0; j < len2; j++) {
       curr = keys[j];
       targ[curr] = src[curr];
     }
@@ -72,3 +74,30 @@ String.escape = function(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(
     /"/g, '&quot;').replace(/'/g, '&#x27;').replace(/`/g, '&#x60;');
 };
+// ###debounce
+// Thanks to http://underscorejs.org/
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// N milliseconds. If `immediate` is passed, trigger the function on the
+// leading edge, instead of the trailing.
+//
+// `param` {function} `fn`
+// `param` {number} `wait`
+// `param` {*} `immediate`
+// `returns` {function}
+Function.debounce = function(fn, wait, immediate) {
+  var timeout;
+  return function() {
+    var context = this, args = arguments;
+    var later = function() {
+      timeout = null;
+      if(!immediate) fn.apply(context, args);
+    };
+    var callNow = immediate && !timeout;
+    window.clearTimeout(timeout);
+    timeout = window.setTimeout(later, wait);
+    if(callNow) fn.apply(context, args);
+  };
+};
+
+Function.isFunction = function(arg) {return typeof arg === 'function';};

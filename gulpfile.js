@@ -20,6 +20,7 @@ gulp.task('build-static', function() {
   var modules = [
     './lib/static/object.js',
     './lib/static/string.js',
+    './lib/static/function.js'
   ];
   
   gulp.src(modules)

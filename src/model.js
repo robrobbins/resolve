@@ -15,7 +15,7 @@ var Model = Backbone.Model = function(attributes, options) {
   this.attributes = {};
   if (options.collection) this.collection = options.collection;
   if (options.parse) attrs = this.parse(attrs, options) || {};
-  attrs = Object.defaults({}, attrs, this.defaults);
+  attrs = Object.defaults({}, attrs, utils.result(this, 'defaults'));
   this.set(attrs, options);
   this.changed = {};
   this.initialize.apply(this, arguments);
@@ -145,7 +145,7 @@ Object.extend(Model.prototype, Events, {
   // Clear all attributes on the model, firing `"change"`.
   clear: function(options) {
     var attrs = {};
-    for (var key in this.attributes) attrs[key] = void 0;
+    for (var key in this.attributes) attrs[key] = undefined;
     return this.set(attrs, Object.extend({}, options, {unset: true}));
   },
 
@@ -153,7 +153,7 @@ Object.extend(Model.prototype, Events, {
   // If you specify an attribute name, determine if that attribute has changed.
   hasChanged: function(attr) {
     if (attr == null) return !!Object.keys(this.changed).length;
-    return utils.has(this.changed, attr);
+    return Object.has(this.changed, attr);
   },
 
   // Return an object containing all the attributes that have changed, or
@@ -295,9 +295,10 @@ Object.extend(Model.prototype, Events, {
   // using Backbone's restful methods, override this to change the endpoint
   // that will be called.
   url: function() {
-    var base = this.urlRoot || this.collection && this.collection.url || urlError();
-    // may be a function
-    if(typeof base === 'function') base = base.call(this);
+    var base =
+      utils.result(this, 'urlRoot') ||
+      utils.result(this.collection, 'url') ||
+      urlError();
     if (this.isNew()) return base;
     return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
   },

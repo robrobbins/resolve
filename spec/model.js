@@ -117,8 +117,8 @@ describe('The Model Module', function() {
   it("clones", function() {
     var a = new Backbone.Model({ 'foo': 1, 'bar': 2, 'baz': 3});
     var b = a.clone();
-    expect(a.get('foo')).toBe(1);;
-    expect(a.get('bar')).toBe(2)
+    expect(a.get('foo')).toBe(1);
+    expect(a.get('bar')).toBe(2);
     expect(a.get('baz')).toBe(3);
     expect(b.get('foo')).toBe(a.get('foo'));
     expect(b.get('bar')).toBe(a.get('bar'));
@@ -309,6 +309,154 @@ describe('The Model Module', function() {
     model.unset('_id');
     expect(model.id).toBeFalsy();
     expect(model.isNew()).toBe(true);
+  });
+  
+  it("sets an empty string", function() {
+    var model = new Backbone.Model({name : "Model"});
+    model.set({name : ''});
+    expect(model.get('name')).toBe('');
+  });
+  
+  it("sets an object", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    
+    var model = new Backbone.Model({
+      custom: { foo: 1 }
+    });
+    
+    model.on('change', this.cb);
+    model.set({
+      custom: { foo: 1 } // no change should be fired
+    });
+    model.set({
+      custom: { foo: 2 } // change event should be fired
+    });
+    
+    expect(spy.calls.count()).toBe(1);
+  });
+  
+  it("clears", function() {
+    var changed;
+    var model = new Backbone.Model({id: 1, name : "Model"});
+    model.on("change:name", function(){ changed = true; });
+    model.on("change", function() {
+      var changedAttrs = model.changedAttributes();
+      expect('name' in changedAttrs).toBe(true);
+    });
+    model.clear();
+    expect(changed).toBe(true);
+    expect(model.get('name')).toBe(undefined);
+  });
+  
+  it("uses defaults", function() {
+    var Defaulted = Backbone.Model.extend({
+      defaults: {
+        "one": 1,
+        "two": 2
+      }
+    });
+    var model = new Defaulted({two: undefined});
+    expect(model.get('one')).toBe(1);
+    expect(model.get('two')).toBe(2);
+    Defaulted = Backbone.Model.extend({
+      defaults: function() {
+        return {
+          "one": 3,
+          "two": 4
+        };
+      }
+    });
+    model = new Defaulted({two: undefined});
+    expect(model.get('one')).toBe(3);
+    expect(model.get('two')).toBe(4);
+  });
+  
+  it("has change, hasChanged, changedAttributes, previous, previousAttributes", function() {
+    var model = new Backbone.Model({name: "Tim", age: 10});
+    expect(model.changedAttributes()).toBe(false);
+    model.on('change', function() {
+      expect(model.hasChanged('name')).toBeTruthy();
+      expect(model.hasChanged('age')).toBeFalsy();
+      expect(Backbone.utils.isEqual(model.changedAttributes(), {name : 'Rob'})).toBe(true);
+      expect(model.previous('name')).toBe('Tim');
+      expect(Backbone.utils.isEqual(model.previousAttributes(), {name : "Tim", age : 10})).toBe(true);
+    });
+    expect(model.hasChanged()).toBe(false);
+    expect(model.hasChanged(undefined)).toBe(false);
+    model.set({name : 'Rob'});
+    expect(model.get('name')).toBe('Rob');
+  });
+  
+  it("has changedAttributes", function() {
+    var model = new Backbone.Model({a: 'a', b: 'b'});
+    expect(model.changedAttributes()).toBe(false);
+    expect(model.changedAttributes({a: 'a'})).toBe(false);
+    expect(model.changedAttributes({a: 'b'}).a).toBe('b');
+  });
+  
+  it("changed with options", function() {
+    var value;
+    var model = new Backbone.Model({name: 'Rob'});
+    model.on('change', function(model, options) {
+      value = options.prefix + model.get('name');
+    });
+    model.set({name: 'Bob'}, {prefix: 'Mr. '});
+    expect(value).toBe('Mr. Bob');
+    model.set({name: 'Sue'}, {prefix: 'Ms. '});
+    expect(value).toBe('Ms. Sue');
+  });
+  
+  it("changed after initialize", function () {
+    var changed = 0;
+    var attrs = {id: 1, label: 'c'};
+    var obj = new Backbone.Model(attrs);
+    obj.on('change', function() { changed += 1; });
+    obj.set(attrs);
+    expect(changed).toBe(0);
+  });
+  
+  it("validates", function() {
+    var lastError;
+    var model = new Backbone.Model();
+    model.validate = function(attrs) {
+      if (attrs.admin !== this.get('admin')) return "Can't change admin status.";
+    };
+    model.on('invalid', function(model, error) {
+      lastError = error;
+    });
+    var result = model.set({a: 100});
+    expect(result).toEqual(model);
+    expect(model.get('a')).toBe(100);
+    expect(lastError).toBe(undefined);
+    result = model.set({admin: true});
+    expect(model.get('admin')).toBe(true);
+    result = model.set({a: 200, admin: false}, {validate:true});
+    expect(lastError).toBe("Can't change admin status.");
+    expect(result).toBe(false);
+    expect(model.get('a')).toBe(100);
+  });
+  
+  it("validate on unset and clear", function() {
+    var error;
+    var model = new Backbone.Model({name: "One"});
+    model.validate = function(attrs) {
+      if (!attrs.name) {
+        error = true;
+        return "No thanks.";
+      }
+    };
+    model.set({name: "Two"});
+    expect(model.get('name')).toBe('Two');
+    expect(error).toBe(undefined);
+    model.unset('name', {validate: true});
+    expect(error).toBe(true);
+    expect(model.get('name')).toBe('Two');
+    model.clear({validate:true});
+    expect(model.get('name')).toBe('Two');
+    delete model.validate;
+    model.clear();
+    expect(model.get('name')).toBe(undefined);
   });
   
 });
