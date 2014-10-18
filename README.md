@@ -1,4 +1,4 @@
 resolve
 =======
 
-Backbone. Straight.
+Backbone minus the view and jQuery.
