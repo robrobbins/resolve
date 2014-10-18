@@ -1,5 +1,5 @@
 /*global spyOn*/
-
+var _ = require('underscore');
 var Backbone = require('../dist/resolve');
 
 describe('The Events Module', function() {

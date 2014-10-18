@@ -1,139 +1,24 @@
 (function(root, factory) {
   // Node.js or CommonJS
   if (typeof exports !== 'undefined') {
-    factory(root, exports);
+    var _ = require('underscore');
+    factory(root, exports, _);
 
   // browser
   } else {
-    root.Backbone = factory(root, {});
+    root.Backbone = factory(root, {}, root._);
   }
 
-} (this, function(root, Backbone) {
-  
+} (this, function(root, Backbone, _) {
+// Initial Setup
+// -------------
+
 // Create local references to array methods we'll want to use later.
 var array = [];
 var slice = array.slice;
 
 // Current version of the library we are in parity with. Keep in sync with `package.json`.
 Backbone.VERSION = '1.1.2.r';
-// Functionality not in any static files, but still needed for Resolve
-var utils = Backbone.utils = {
-  _uid: 0,
-  
-  eq: function(a, b, aStack, bStack) {
-    // Identical objects are equal. `0 === -0`, but they aren't identical.
-    // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
-    if (a === b) return a !== 0 || 1 / a === 1 / b;
-    // A strict comparison is necessary because `null == undefined`.
-    if (a == null || b == null) return a === b;
-    // // Unwrap any wrapped objects.
-    // if (a instanceof _) a = a._wrapped;
-    // if (b instanceof _) b = b._wrapped;
-    // Compare `[[Class]]` names.
-    var className = Object.prototype.toString.call(a);
-    if (className !== Object.prototype.toString.call(b)) return false;
-    switch (className) {
-      // Strings, numbers, regular expressions, dates, and booleans are compared by value.
-      case '[object RegExp]':
-      // RegExps are coerced to strings for comparison (Note: '' + /a/i === '/a/i')
-      case '[object String]':
-        // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
-        // equivalent to `new String("5")`.
-        return '' + a === '' + b;
-      case '[object Number]':
-        // `NaN`s are equivalent, but non-reflexive.
-        // Object(NaN) is equivalent to NaN
-        if (+a !== +a) return +b !== +b;
-        // An `egal` comparison is performed for other numeric values.
-        return +a === 0 ? 1 / +a === 1 / b : +a === +b;
-      case '[object Date]':
-      case '[object Boolean]':
-        // Coerce dates and booleans to numeric primitive values. Dates are compared by their
-        // millisecond representations. Note that invalid dates with millisecond representations
-        // of `NaN` are not equivalent.
-        return +a === +b;
-    }
-
-    var areArrays = className === '[object Array]';
-    if (!areArrays) {
-      if (typeof a != 'object' || typeof b != 'object') return false;
-
-      // Objects with different constructors are not equivalent, but `Object`s or `Array`s
-      // from different frames are.
-      var aCtor = a.constructor, bCtor = b.constructor;
-      if ((aCtor !== bCtor && typeof aCtor !== 'function' && aCtor instanceof aCtor &&
-        typeof bCtor === 'function' && bCtor instanceof bCtor) && ('constructor' in a && 'constructor' in b)) {
-        return false;
-      }
-    }
-    // Assume equality for cyclic structures. The algorithm for detecting cyclic
-    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
-    var length = aStack.length;
-    while (length--) {
-      // Linear search. Performance is inversely proportional to the number of
-      // unique nested structures.
-      if (aStack[length] === a) return bStack[length] === b;
-    }
-
-    // Add the first object to the stack of traversed objects.
-    aStack.push(a);
-    bStack.push(b);
-    var size, result;
-    // Recursively compare objects and arrays.
-    if (areArrays) {
-      // Compare array lengths to determine if a deep comparison is necessary.
-      size = a.length;
-      result = size === b.length;
-      if (result) {
-        // Deep compare the contents, ignoring non-numeric properties.
-        while (size--) {
-          if (!(result = this.eq(a[size], b[size], aStack, bStack))) break;
-        }
-      }
-    } else {
-      // Deep compare objects.
-      var keys = Object.keys(a), key;
-      size = keys.length;
-      // Ensure that both objects contain the same number of properties before comparing deep equality.
-      result = Object.keys(b).length === size;
-      if (result) {
-        while (size--) {
-          // Deep compare each member
-          key = keys[size];
-          if (!(result = Object.has(b, key) && this.eq(a[key], b[key], aStack, bStack))) break;
-        }
-      }
-    }
-    // Remove the first object from the stack of traversed objects.
-    aStack.pop();
-    bStack.pop();
-    return result;
-  },
-  
-  // Escapes a string for HTML interpolation, casts a truthy non-string to a string and returns empty string for falsy
-  escape: function(str) {
-    return str ? typeof str === 'string' ? String.escape(str) : String(str) : '';
-  },
-  
-  getUid: function(pre) {
-    var n = ++this._uid;
-    return pre ? pre + n : String(n);
-  },
-  
-  // Perform a deep comparison to check if two objects are equal.
-  isEqual: function(a, b) {
-    return this.eq(a, b, [], []);
-  },
-  
-  // If the value of the named `property` is a function then invoke it with the
-  // `object` as context; otherwise, return it.
-  result: function(obj, prop, fb) {
-    var val = obj == null ? undefined : obj[prop];
-    if (val === undefined) return fb;
-    return Function.isFunction(val) ? obj[prop]() : val;
-  }
-  
-};
 // Backbone.Events
 // ---------------
 
@@ -143,11 +28,12 @@ var utils = Backbone.utils = {
 // succession.
 //
 //     var object = {};
-//     Object.extend(object, Backbone.Events);
+//     _.extend(object, Backbone.Events);
 //     object.on('expand', function(){ alert('expanded'); });
 //     object.trigger('expand');
 //
 var Events = Backbone.Events = {
+
   // Bind an event to a `callback` function. Passing `"all"` will bind
   // the callback to all events fired.
   on: function(name, callback, context) {
@@ -157,14 +43,18 @@ var Events = Backbone.Events = {
     events.push({callback: callback, context: context, ctx: context || this});
     return this;
   },
-  
-  listenTo: function(obj, name, callback) {
-    var listeningTo = this._listeningTo || (this._listeningTo = {});
-    var id = obj._listenId || (obj._listenId = utils.getUid('l'));
-    listeningTo[id] = obj;
-    if (!callback && typeof name === 'object') callback = this;
-    obj.on(name, callback, this);
-    return this;
+
+  // Bind an event to only be triggered a single time. After the first time
+  // the callback is invoked, it will be removed.
+  once: function(name, callback, context) {
+    if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
+    var self = this;
+    var once = _.once(function() {
+      self.off(name, once);
+      callback.apply(this, arguments);
+    });
+    once._callback = callback;
+    return this.on(name, once, context);
   },
 
   // Remove one or many callbacks. If `context` is null, removes all
@@ -180,7 +70,7 @@ var Events = Backbone.Events = {
       return this;
     }
 
-    var names = name ? [name] : Object.keys(this._events);
+    var names = name ? [name] : _.keys(this._events);
     for (var i = 0, length = names.length; i < length; i++) {
       name = names[i];
 
@@ -244,14 +134,19 @@ var Events = Backbone.Events = {
     for (var id in listeningTo) {
       obj = listeningTo[id];
       obj.off(name, callback, this);
-      if (remove || Object.keys(obj._events).length === 0) delete this._listeningTo[id];
+      if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
     }
     return this;
   }
+
 };
 
+// Regular expression used to split event strings.
 var eventSplitter = /\s+/;
 
+// Implement fancy features of the Events API such as multiple event
+// names `"change blur"` and jQuery-style event maps `{change: action}`
+// in terms of the existing API.
 var eventsApi = function(obj, action, name, rest) {
   if (!name) return true;
 
@@ -288,6 +183,26 @@ var triggerEvents = function(events, args) {
     default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args); return;
   }
 };
+
+var listenMethods = {listenTo: 'on', listenToOnce: 'once'};
+
+// Inversion-of-control versions of `on` and `once`. Tell *this* object to
+// listen to an event in another object ... keeping track of what it's
+// listening to.
+_.each(listenMethods, function(implementation, method) {
+  Events[method] = function(obj, name, callback) {
+    var listeningTo = this._listeningTo || (this._listeningTo = {});
+    var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
+    listeningTo[id] = obj;
+    if (!callback && typeof name === 'object') callback = this;
+    obj[implementation](name, callback, this);
+    return this;
+  };
+});
+
+// Allow the `Backbone` object to serve as a global event bus, for folks who
+// want global "pubsub" in a convenient place.
+_.extend(Backbone, Events);
 // Backbone.Model
 // --------------
 
@@ -301,18 +216,18 @@ var triggerEvents = function(events, args) {
 var Model = Backbone.Model = function(attributes, options) {
   var attrs = attributes || {};
   options || (options = {});
-  this.cid = utils.getUid('c');
+  this.cid = _.uniqueId('c');
   this.attributes = {};
   if (options.collection) this.collection = options.collection;
   if (options.parse) attrs = this.parse(attrs, options) || {};
-  attrs = Object.defaults({}, attrs, utils.result(this, 'defaults'));
+  attrs = _.defaults({}, attrs, _.result(this, 'defaults'));
   this.set(attrs, options);
   this.changed = {};
   this.initialize.apply(this, arguments);
 };
 
 // Attach all inheritable methods to the Model prototype.
-Object.extend(Model.prototype, Events, {
+_.extend(Model.prototype, Events, {
 
   // A hash of attributes whose current and previous value differ.
   changed: null,
@@ -326,11 +241,11 @@ Object.extend(Model.prototype, Events, {
 
   // Initialize is an empty function by default. Override it with your own
   // initialization logic.
-  initialize: function() {},
+  initialize: function(){},
 
   // Return a copy of the model's `attributes` object.
-  toJSON: function() {
-    return Object.extend({}, this.attributes);
+  toJSON: function(options) {
+    return _.clone(this.attributes);
   },
 
   // Proxy `Backbone.sync` by default -- but override this if you need
@@ -346,7 +261,7 @@ Object.extend(Model.prototype, Events, {
 
   // Get the HTML-escaped value of an attribute.
   escape: function(attr) {
-    return utils.escape(this.get(attr));
+    return _.escape(this.get(attr));
   },
 
   // Returns `true` if the attribute contains a value that is not null
@@ -383,7 +298,7 @@ Object.extend(Model.prototype, Events, {
     this._changing  = true;
 
     if (!changing) {
-      this._previousAttributes = Object.extend({}, this.attributes);
+      this._previousAttributes = _.clone(this.attributes);
       this.changed = {};
     }
     current = this.attributes, prev = this._previousAttributes;
@@ -394,8 +309,8 @@ Object.extend(Model.prototype, Events, {
     // For each `set` attribute, update or delete the current value.
     for (attr in attrs) {
       val = attrs[attr];
-      if (!utils.isEqual(current[attr], val)) changes.push(attr);
-      if (!utils.isEqual(prev[attr], val)) {
+      if (!_.isEqual(current[attr], val)) changes.push(attr);
+      if (!_.isEqual(prev[attr], val)) {
         this.changed[attr] = val;
       } else {
         delete this.changed[attr];
@@ -429,21 +344,21 @@ Object.extend(Model.prototype, Events, {
   // Remove an attribute from the model, firing `"change"`. `unset` is a noop
   // if the attribute doesn't exist.
   unset: function(attr, options) {
-    return this.set(attr, undefined, Object.extend({}, options, {unset: true}));
+    return this.set(attr, void 0, _.extend({}, options, {unset: true}));
   },
 
   // Clear all attributes on the model, firing `"change"`.
   clear: function(options) {
     var attrs = {};
-    for (var key in this.attributes) attrs[key] = undefined;
-    return this.set(attrs, Object.extend({}, options, {unset: true}));
+    for (var key in this.attributes) attrs[key] = void 0;
+    return this.set(attrs, _.extend({}, options, {unset: true}));
   },
 
   // Determine if the model has changed since the last `"change"` event.
   // If you specify an attribute name, determine if that attribute has changed.
   hasChanged: function(attr) {
-    if (attr == null) return !!Object.keys(this.changed).length;
-    return Object.has(this.changed, attr);
+    if (attr == null) return !_.isEmpty(this.changed);
+    return _.has(this.changed, attr);
   },
 
   // Return an object containing all the attributes that have changed, or
@@ -453,11 +368,11 @@ Object.extend(Model.prototype, Events, {
   // You can also pass an attributes object to diff against the model,
   // determining if there *would be* a change.
   changedAttributes: function(diff) {
-    if (!diff) return this.hasChanged() ? Object.extend({}, this.changed) : false;
+    if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
     var val, changed = false;
     var old = this._changing ? this._previousAttributes : this.attributes;
     for (var attr in diff) {
-      if (utils.isEqual(old[attr], (val = diff[attr]))) continue;
+      if (_.isEqual(old[attr], (val = diff[attr]))) continue;
       (changed || (changed = {}))[attr] = val;
     }
     return changed;
@@ -473,15 +388,15 @@ Object.extend(Model.prototype, Events, {
   // Get all of the attributes of the model at the time of the previous
   // `"change"` event.
   previousAttributes: function() {
-    return Object.extend({}, this._previousAttributes);
+    return _.clone(this._previousAttributes);
   },
 
   // Fetch the model from the server. If the server's representation of the
   // model differs from its current attributes, they will be overridden,
   // triggering a `"change"` event.
   fetch: function(options) {
-    options = options ? Object.extend({}, options) : {};
-    if (options.parse === undefined) options.parse = true;
+    options = options ? _.clone(options) : {};
+    if (options.parse === void 0) options.parse = true;
     var model = this;
     var success = options.success;
     options.success = function(resp) {
@@ -507,7 +422,7 @@ Object.extend(Model.prototype, Events, {
       (attrs = {})[key] = val;
     }
 
-    options = Object.extend({validate: true}, options);
+    options = _.extend({validate: true}, options);
 
     // If we're not waiting and attributes exist, save acts as
     // `set(attr).save(null, opts)` with validation. Otherwise, check if
@@ -520,20 +435,20 @@ Object.extend(Model.prototype, Events, {
 
     // Set temporary attributes if `{wait: true}`.
     if (attrs && options.wait) {
-      this.attributes = Object.extend({}, attributes, attrs);
+      this.attributes = _.extend({}, attributes, attrs);
     }
 
     // After a successful server-side save, the client is (optionally)
     // updated with the server-side state.
-    if (options.parse === undefined) options.parse = true;
+    if (options.parse === void 0) options.parse = true;
     var model = this;
     var success = options.success;
     options.success = function(resp) {
       // Ensure attributes are restored during synchronous saves.
       model.attributes = attributes;
       var serverAttrs = model.parse(resp, options);
-      if (options.wait) serverAttrs = Object.extend(attrs || {}, serverAttrs);
-      if (Object.isObject(serverAttrs) && !model.set(serverAttrs, options)) {
+      if (options.wait) serverAttrs = _.extend(attrs || {}, serverAttrs);
+      if (_.isObject(serverAttrs) && !model.set(serverAttrs, options)) {
         return false;
       }
       if (success) success(model, resp, options);
@@ -555,7 +470,7 @@ Object.extend(Model.prototype, Events, {
   // Optimistically removes the model from its collection, if it has one.
   // If `wait: true` is passed, waits for the server to respond before removal.
   destroy: function(options) {
-    options = options ? Object.extend({}, options) : {};
+    options = options ? _.clone(options) : {};
     var model = this;
     var success = options.success;
 
@@ -586,8 +501,8 @@ Object.extend(Model.prototype, Events, {
   // that will be called.
   url: function() {
     var base =
-      utils.result(this, 'urlRoot') ||
-      utils.result(this.collection, 'url') ||
+      _.result(this, 'urlRoot') ||
+      _.result(this.collection, 'url') ||
       urlError();
     if (this.isNew()) return base;
     return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
@@ -611,20 +526,35 @@ Object.extend(Model.prototype, Events, {
 
   // Check if the model is currently in a valid state.
   isValid: function(options) {
-    return this._validate({}, Object.extend(options || {}, { validate: true }));
+    return this._validate({}, _.extend(options || {}, { validate: true }));
   },
 
   // Run validation against the next complete set of model attributes,
   // returning `true` if all is well. Otherwise, fire an `"invalid"` event.
   _validate: function(attrs, options) {
     if (!options.validate || !this.validate) return true;
-    attrs = Object.extend({}, this.attributes, attrs);
+    attrs = _.extend({}, this.attributes, attrs);
     var error = this.validationError = this.validate(attrs, options) || null;
     if (!error) return true;
-    this.trigger('invalid', this, error, Object.extend(options, {validationError: error}));
+    this.trigger('invalid', this, error, _.extend(options, {validationError: error}));
     return false;
   }
+
 });
+
+// Underscore methods that we want to implement on the Model.
+var modelMethods = ['keys', 'values', 'pairs', 'invert', 'pick', 'omit', 'chain', 'isEmpty'];
+
+// Mix in each Underscore method as a proxy to `Model#attributes`.
+_.each(modelMethods, function(method) {
+  if (!_[method]) return;
+  Model.prototype[method] = function() {
+    var args = slice.call(arguments);
+    args.unshift(this.attributes);
+    return _[method].apply(_, args);
+  };
+});
+
 // Helpers
 // -------
 
@@ -638,14 +568,14 @@ var extend = function(protoProps, staticProps) {
   // The constructor function for the new subclass is either defined by you
   // (the "constructor" property in your `extend` definition), or defaulted
   // by us to simply call the parent's constructor.
-  if (protoProps && Object.has(protoProps, 'constructor')) {
+  if (protoProps && _.has(protoProps, 'constructor')) {
     child = protoProps.constructor;
   } else {
     child = function(){ return parent.apply(this, arguments); };
   }
 
   // Add static properties to the constructor function, if supplied.
-  Object.extend(child, parent, staticProps);
+  _.extend(child, parent, staticProps);
 
   // Set the prototype chain to inherit from `parent`, without calling
   // `parent`'s constructor function.
@@ -655,7 +585,7 @@ var extend = function(protoProps, staticProps) {
 
   // Add prototype properties (instance properties) to the subclass,
   // if supplied.
-  if (protoProps) Object.extend(child.prototype, protoProps);
+  if (protoProps) _.extend(child.prototype, protoProps);
 
   // Set a convenience property in case the parent's prototype is needed
   // later.
@@ -665,8 +595,7 @@ var extend = function(protoProps, staticProps) {
 };
 
 // Set up inheritance for the model, collection, router, view and history.
-// Model.extend = Collection.extend = Router.extend = View.extend = History.extend = extend;
-Model.extend = extend;
+Model.extend = /*Collection.extend = Router.extend = View.extend = History.extend =*/ extend;
 
 // Throw an error when a URL is needed, and none is supplied.
 var urlError = function() {
