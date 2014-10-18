@@ -1,6 +1,6 @@
 {
   "name": "Resolve",
-  "description": "Backbone. Straight.",
+  "description": "Backbone for react.",
   "devDependencies": {
     "gulp": "~3.8.8",
     "gulp-concat": "~2.4.1",
