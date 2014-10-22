@@ -8,6 +8,7 @@ gulp.task('build', function() {
     './src/utils.js',
     './src/events.js',
     './src/model.js',
+    './src/collection.js',
     './src/return.js'
   ];
   
@@ -23,5 +24,10 @@ gulp.task('events-spec', function() {
 
 gulp.task('model-spec', function() {
   return gulp.src('./spec/model.js')
+    .pipe(jasmine({includeStackTrace: true}));
+});
+
+gulp.task('collection-spec', function() {
+  return gulp.src('./spec/collection.js')
     .pipe(jasmine({includeStackTrace: true}));
 });

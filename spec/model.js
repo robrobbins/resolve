@@ -23,11 +23,11 @@ describe('The Model Module', function() {
       initialize: function() {
         this.one = 1;
         this.set('two', 2);
-        // equal(this.collection, collection);
+        expect(this.collection).toBeTruthy();
       }
     });
     
-    var model = new Model({});
+    var model = new Model({}, {collection: new Backbone.Collection});
     expect(model.one).toBe(1);
     expect(model.get('two')).toBe(2);
   });
