@@ -96,4 +96,161 @@ describe('The Collection Module', function() {
     expect(col2.get(model.clone())).toEqual(col2.first());
   });
   
+  it('gets with "undefined" id', function() {
+    var collection = new Backbone.Collection([{id: 1}, {id: 'undefined'}]);
+    expect(collection.get(1).id).toBe(1);
+  });
+  
+  it("updates index when id changes", function() {
+    var col = new Backbone.Collection();
+    col.add([
+      {id : 0, name : 'one'},
+      {id : 1, name : 'two'}
+    ]);
+    var one = col.get(0);
+    expect(one.get('name')).toBe('one');
+    col.on('change:name', function (model) { expect(this.get(model)).toBeTruthy(); });
+    one.set({name: 'dalmatians', id : 101});
+    expect(col.get(0)).toBeFalsy();
+    expect(col.get(101).get('name')).toBe('dalmatians');
+  });
+  
+  it("ats", function() {
+    expect(this.col.at(2)).toEqual(this.c);
+    expect(this.col.at(-2)).toEqual(this.c);
+  });
+
+  it("plucks", function() {
+    expect(this.col.pluck('label').join(' ')).toBe('a b c d');
+  });
+  
+  it("adds", function() {
+    var added, opts, secondAdded, e;
+    added = opts = secondAdded = null;
+    e = new Backbone.Model({id: 10, label : 'e'});
+    this.otherCol.add(e);
+    this.otherCol.on('add', function() {
+      secondAdded = true;
+    });
+    this.col.on('add', function(model, collection, options){
+      added = model.get('label');
+      opts = options;
+    });
+    this.col.add(e, {amazing: true});
+    expect(added).toBe('e');
+    expect(this.col.length).toBe(5);
+    expect(this.col.last()).toEqual(e);
+    expect(this.otherCol.length).toBe(1);
+    expect(secondAdded).toBe(null);
+    expect(opts.amazing).toBe(true);
+
+    var f = new Backbone.Model({id: 20, label : 'f'});
+    var g = new Backbone.Model({id: 21, label : 'g'});
+    var h = new Backbone.Model({id: 22, label : 'h'});
+    var atCol = new Backbone.Collection([f, g, h]);
+    expect(atCol.length).toBe(3);
+    atCol.add(e, {at: 1});
+    expect(atCol.length).toBe(4);
+    expect(atCol.at(1)).toEqual(e);
+    expect(atCol.last()).toEqual(h);
+
+    var coll = new Backbone.Collection(new Array(2));
+    var addCount = 0;
+    coll.on('add', function(){
+        addCount += 1;
+    });
+    coll.add([undefined, f, g]);
+    expect(coll.length).toBe(5);
+    expect(addCount).toBe(3);
+    coll.add(new Array(4));
+    expect(coll.length).toBe(9);
+    expect(addCount).toBe(7);
+  });
+  
+  it("adds multiple models", function() {
+    var col = new Backbone.Collection([{at: 0}, {at: 1}, {at: 9}]);
+    col.add([{at: 2}, {at: 3}, {at: 4}, {at: 5}, {at: 6}, {at: 7}, {at: 8}], {at: 2});
+    for (var i = 0; i <= 5; i++) {
+      expect(col.at(i).get('at')).toBe(i);
+    }
+  });
+
+  it("shows add at should have preference over comparator", function() {
+    var Col = Backbone.Collection.extend({
+      comparator: function(a,b) {
+        return a.id > b.id ? -1 : 1;
+      }
+    });
+
+    var col = new Col([{id: 2}, {id: 3}]);
+    col.add(new Backbone.Model({id: 1}), {at:   1});
+
+    expect(col.pluck('id').join(' ')).toBe('3 1 2');
+  });
+  
+  it("can't add model to collection twice", function() {
+    var col = new Backbone.Collection([{id: 1}, {id: 2}, {id: 1}, {id: 2}, {id: 3}]);
+    expect(col.pluck('id').join(' ')).toBe('1 2 3');
+  });
+
+  it("can't add different model with same id to collection twice", function() {
+    var col = new Backbone.Collection;
+    col.unshift({id: 101});
+    col.add({id: 101});
+    expect(col.length).toBe(1);
+  });
+
+  it("merges in duplicate models with {merge: true}", function() {
+    var col = new Backbone.Collection;
+    col.add([{id: 1, name: 'Moe'}, {id: 2, name: 'Curly'}, {id: 3, name: 'Larry'}]);
+    col.add({id: 1, name: 'Moses'});
+    expect(col.first().get('name')).toBe('Moe');
+    col.add({id: 1, name: 'Moses'}, {merge: true});
+    expect(col.first().get('name')).toBe('Moses');
+    col.add({id: 1, name: 'Tim'}, {merge: true, silent: true});
+    expect(col.first().get('name')).toBe('Tim');
+  });
+  
+  it("adds a model to multiple collections", function() {
+    var counter = 0;
+    var e = new Backbone.Model({id: 10, label : 'e'});
+    e.on('add', function(model, collection) {
+      counter++;
+      expect(e).toEqual(model);
+      if (counter > 1) {
+        expect(collection).toEqual(colF);
+      } else {
+        expect(collection).toEqual(colE);
+      }
+    });
+    var colE = new Backbone.Collection([]);
+    colE.on('add', function(model, collection) {
+      expect(e).toEqual(model);
+      expect(colE).toEqual(collection);
+    });
+    var colF = new Backbone.Collection([]);
+    colF.on('add', function(model, collection) {
+      expect(e).toEqual(model);
+      expect(colF).toEqual(collection);
+    });
+    colE.add(e);
+    expect(e.collection).toEqual(colE);
+    colF.add(e);
+    expect(e.collection).toEqual(colE);
+  });
+  
+  it("adds model with parse", function() {
+    var Model = Backbone.Model.extend({
+      parse: function(obj) {
+        obj.value += 1;
+        return obj;
+      }
+    });
+
+    var Col = Backbone.Collection.extend({model: Model});
+    var col = new Col;
+    col.add({value: 1}, {parse: true});
+    expect(col.at(0).get('value')).toBe(2);
+  });
+  
 });
