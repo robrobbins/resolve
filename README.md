@@ -1,4 +1,4 @@
 resolve
 =======
 
-(Backbone - view - jQuery) + React.
+( Backbone - View - jQuery ) + React.
