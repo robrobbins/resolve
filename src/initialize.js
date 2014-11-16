@@ -2,14 +2,17 @@
   // Node.js or CommonJS
   if (typeof exports !== 'undefined') {
     var _ = require('underscore');
-    factory(root, exports, _);
+    // if in node env you should use request, not reqwest
+    var req = require('request');
+    factory(root, exports, _, req);
 
   // browser
   } else {
-    root.Backbone = factory(root, {}, root._);
+    // we use reqwest as our `$.ajax` replacement for `sync`
+    root.Backbone = factory(root, {}, root._, root.reqwest);
   }
 
-} (this, function(root, Backbone, _) {
+} (this, function(root, Backbone, _, req) {
 // Initial Setup
 // -------------
 

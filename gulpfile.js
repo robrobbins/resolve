@@ -5,10 +5,12 @@ var gulp = require('gulp'),
 gulp.task('build', function() {
   var modules = [
     './src/initialize.js',
-    './src/utils.js',
     './src/events.js',
     './src/model.js',
     './src/collection.js',
+    './src/sync.js',
+    './src/router.js',
+    './src/history.js',
     './src/return.js'
   ];
   
@@ -24,6 +26,11 @@ gulp.task('events-spec', function() {
 
 gulp.task('model-spec', function() {
   return gulp.src('./spec/model.js')
+    .pipe(jasmine({includeStackTrace: true}));
+});
+
+gulp.task('model-sync-spec', function() {
+  return gulp.src('./spec/model_sync.js')
     .pipe(jasmine({includeStackTrace: true}));
 });
 
