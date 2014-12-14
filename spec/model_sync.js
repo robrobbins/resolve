@@ -42,6 +42,8 @@ describe('The Model Sync Functionality', function() {
     this.collection.add(this.doc);
   });
   
+  // SAVE
+  
   it("saves within change event", function () {
     var model = new Backbone.Model({firstName : "Taylor", lastName: "Swift"});
     model.url = '/test';
@@ -186,6 +188,224 @@ describe('The Model Sync Functionality', function() {
     model.validate = function () { ++times; };
     model.save({});
     expect(times).toBe(1);
+  });
+  
+  it("`save` with `wait` sends correct attributes", function() {
+    var changed = 0;
+    var model = new Backbone.Model({x: 1, y: 2});
+    model.url = '/test';
+    model.on('change:x', function() { changed++; });
+    model.save({x: 3}, {wait: true});
+    expect(this.env.ajaxSettings.data).toEqual({x: 3, y: 2});
+    expect(model.get('x')).toBe(1);
+    expect(changed).toBe(0);
+    this.env.syncArgs.options.success({});
+    expect(model.get('x')).toBe(3);
+    expect(changed).toBe(1);
+  });
+  
+  it("a failed `save` with `wait` doesn't leave attributes behind", function() {
+    var model = new Backbone.Model;
+    model.url = '/test';
+    model.save({x: 1}, {wait: true});
+    expect(model.get('x')).toBe(undefined);
+  });
+
+  it("#1030 - `save` with `wait` results in correct attributes if success is called during sync", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    var model = new Backbone.Model({x: 1, y: 2});
+    
+    model.sync = function(method, model, options) {
+      options.success();
+    };
+    model.on("change:x", this.cb);
+    model.save({x: 3}, {wait: true});
+    
+    expect(spy).toHaveBeenCalled();
+    expect(model.get('x')).toBe(3);
+  });
+  
+  it("save with wait validates attributes", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    var model = new Backbone.Model();
+    
+    model.url = '/test';
+    model.validate = this.cb;
+    
+    model.save({x: 1}, {wait: true});
+    
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it("save turns on parse flag", function () {
+    var Model = Backbone.Model.extend({
+      sync: function(method, model, options) { expect(options.parse).toBeTruthy(); }
+    });
+    new Model().save();
+  });
+  
+  it("#1355 - `options` is passed to success callbacks", function() {
+    var model = new Backbone.Model();
+    var opts = {
+      success: function( model, resp, options ) {
+        expect(options).toBeTruthy();
+      }
+    };
+    var spy = spyOn(opts, 'success').and.callThrough();
+    
+    model.sync = function(method, model, options) {
+      options.success();
+    };
+    
+    model.save({id: 1}, opts);
+    model.fetch(opts);
+    model.destroy(opts);
+    
+    expect(spy.calls.count()).toBe(3);
+  });
+  
+  it("#1412 - Trigger 'sync' event.", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    var model = new Backbone.Model({id: 1});
+    
+    model.sync = function (method, model, options) { options.success(); };
+    model.on('sync', this.cb);
+    model.fetch();
+    model.save();
+    model.destroy();
+    
+    expect(spy.calls.count()).toBe(3);
+  });
+  
+  it("#1365 - Destroy: New models execute success callback.", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    
+    new Backbone.Model()
+    .on('sync', this.cb)
+    .on('destroy', this.cb)
+    .destroy({ success: this.cb });
+    
+    expect(spy.calls.count()).toBe(2);
+  });
+
+  it("#1433 - Save: An invalid model cannot be persisted.", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    
+    var model = new Backbone.Model;
+    model.validate = function(){ return 'invalid'; };
+    model.sync = this.cb;
+    
+    expect(model.save()).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("#1377 - Save without attrs triggers 'error'.", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    var Model = Backbone.Model.extend({
+      url: '/test/',
+      sync: function(method, model, options){ options.success(); },
+      validate: function(){ return 'invalid'; }
+    });
+    var model = new Model({id: 1});
+    
+    model.on('invalid', this.cb);
+    model.save();
+    
+    expect(spy).toHaveBeenCalled();
+  });
+  
+  it("toJSON receives attrs during save(..., {wait: true})", function() {
+    var Model = Backbone.Model.extend({
+      url: '/test',
+      toJSON: function() {
+        expect(this.attributes.x).toBe(1);
+        return _.clone(this.attributes);
+      }
+    });
+    var model = new Model;
+    model.save({x: 1}, {wait: true});
+  });
+  
+  // DESTROY
+  
+  it("destroy", function() {
+    this.doc.destroy();
+    
+    expect(this.env.syncArgs.method).toBe('delete');
+    expect(_.isEqual(this.env.syncArgs.model, this.doc)).toBe(true);
+
+    var newModel = new Backbone.Model;
+    
+    expect(newModel.destroy()).toBe(false);
+  });
+
+  it("non-persisted destroy", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    var a = new Backbone.Model({ 'foo': 1, 'bar': 2, 'baz': 3});
+    
+    a.sync = this.cb;
+    a.destroy();
+    
+    expect(spy).not.toHaveBeenCalled();
+  });
+  
+  it("#1365 - Destroy: New models execute success callback", function() {
+    this.cb = function() {};
+    var spy = spyOn(this, 'cb');
+    
+    new Backbone.Model()
+    .on('sync', this.cb)
+    .on('destroy', this.cb)
+    .destroy({ success: this.cb });
+    
+    expect(spy.calls.count()).toBe(2);
+  });
+  
+  // FETCH
+  
+  it("fetches", function() {
+    this.doc.fetch();
+    
+    expect(this.env.syncArgs.method).toBe('read');
+    expect(_.isEqual(this.env.syncArgs.model, this.doc)).toBe(true);
+  });
+  
+});
+
+describe("async model-sync tests", function() {
+  
+  beforeEach(function() {
+    timerCallback = jasmine.createSpy("timerCallback");
+    jasmine.clock().install();
+  });
+  
+  afterEach(function() {
+    jasmine.clock().uninstall();
+  });
+  
+  it("#1478 - Model `save` does not trigger change on unchanged attributes", function() {
+    var Model = Backbone.Model.extend({
+      sync: function(method, model, options) {
+        
+        setTimeout(function(){
+          options.success();
+        }, 10);
+      }
+    });
+    
+    new Model({x: true})
+    .on('change:x', timerCallback)
+    .save(null, {wait: true});
+    
+    jasmine.clock().tick(11);
+    expect(timerCallback).not.toHaveBeenCalled();
   });
   
 });
