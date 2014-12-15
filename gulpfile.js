@@ -38,3 +38,8 @@ gulp.task('collection-spec', function() {
   return gulp.src('./spec/collection.js')
     .pipe(jasmine({includeStackTrace: true}));
 });
+
+gulp.task('collection-sync-spec', function() {
+  return gulp.src('./spec/collection_sync.js')
+    .pipe(jasmine({includeStackTrace: true}));
+});
