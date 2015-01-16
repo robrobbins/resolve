@@ -1,5 +1,5 @@
 {
-  "name": "Resolve",
+  "name": "resolve",
   "author": {"name": "Rob Robbins", "email": "rob.robb.ns@gmail.com"},
   "description": "Backbone minus the View Class and $.",
   "licenses": [
