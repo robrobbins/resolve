@@ -2,8 +2,8 @@
   // Node.js or CommonJS
   if (typeof exports !== 'undefined') {
     var _ = require('underscore');
-    // if in node env you should use request, not reqwest
-    var req = require('request');
+    // if in node env just stub the request
+    var req = function() {};
     factory(root, exports, _, req);
 
   // browser
