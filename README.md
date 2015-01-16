@@ -1,4 +1,7 @@
 resolve
 =======
 
-( Backbone - View - jQuery ) + React.
+#####Backbone - View - jQuery .
+
+## coming soon...
+words.
