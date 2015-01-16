@@ -1,11 +1,26 @@
 {
   "name": "Resolve",
-  "description": "Backbone for react.",
+  "author": {"name": "Rob Robbins", "email": "rob.robb.ns@gmail.com"},
+  "description": "Backbone minus the View Class and $.",
+  "licenses": [
+    {
+      "type": "MIT"
+    }
+  ],
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=0.2.6"
+  },
+  "main": "./dist/resolve",
   "devDependencies": {
     "gulp": "~3.8.8",
     "gulp-concat": "~2.4.1",
     "gulp-jasmine": "~1.0.1",
     "underscore": "~1.7.0",
     "request": "2.48.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robrobbins/resolve"
   }
 }
