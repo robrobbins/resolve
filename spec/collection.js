@@ -573,21 +573,6 @@ describe('The Collection Module', function() {
     expect(models.length).toBe(1);
     expect(attrs === models[0]).toBe(true);
   });
-  
-  // TODO create -> sync tests
-  // it("#714: access `model.collection` in a brand new model.", function() {
-  //   var collection = new Backbone.Collection;
-  //   collection.url = '/test';
-  //   var Model = Backbone.Model.extend({
-  //     set: function(attrs) {
-  //       expect(attrs.prop).toBe('value');
-  //       expect(this.collection).toEqual(collection);
-  //       return this;
-  //     }
-  //   });
-  //   collection.model = Model;
-  //   collection.create({prop: 'value'});
-  // });
 
   it("#574, remove its own reference to the .models array.", function() {
     var col = new Backbone.Collection([
